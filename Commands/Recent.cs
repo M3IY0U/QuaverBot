@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
 using Newtonsoft.Json;
 using QuaverBot.Graphics;
+using DSharpPlus.Entities;
+using System.Threading.Tasks;
+using DSharpPlus.CommandsNext;
+using System.Collections.Generic;
+using DSharpPlus.CommandsNext.Attributes;
 
 namespace QuaverBot.Commands
 {

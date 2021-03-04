@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace QuaverBot
+﻿namespace QuaverBot
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             using var b = new Bot();
             b.RunAsync().Wait();

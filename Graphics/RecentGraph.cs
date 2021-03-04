@@ -1,39 +1,50 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using SixLabors.ImageSharp;
+using System.Collections.Generic;
 using SixLabors.ImageSharp.Drawing;
-using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace QuaverBot.Graphics
 {
     public class RecentGraph
     {
-        public static MemoryStream CreateGraphBanner(string url, List<long> hitdata)
+        private const int BannerWidth = 900;
+        private const int BannerHeight = 250;
+
+        public static MemoryStream CreateGraphBanner(string url, List<long> hitData)
         {
             using (var client = new WebClient())
                 client.DownloadFile(url, "background.jpg");
 
-            using (var background = Image.Load<Rgba32>("background.jpg"))
-            using (var output = new Image<Rgba32>(900, 250))
-            using (var img = new Image<Rgba32>(900, 250))
-            {
-                for (var i = 1; i < hitdata.Count - 1; ++i)
-                {
-                    var x = 900.0f / hitdata.Count * i;
-                    var y = 250 / 2 + hitdata[i];
-                    if (Math.Abs(hitdata[i]) > 127)
-                        y = 250 / 2;
-                    img.Mutate(mut => mut.Fill(HitToColor(hitdata[i]), new EllipsePolygon(new PointF(x, y), 2)));
-                }
+            var background = Image.Load<Rgba32>("background.jpg");
+            var graph = new Image<Rgba32>(BannerWidth, BannerHeight);
+            graph.Mutate(mut => mut.DrawLines(Pens.Solid(Brushes.BackwardDiagonal(Color.White), 1f),
+                new PointF(0, BannerHeight / 2f), new PointF(BannerWidth, BannerHeight / 2f)));
 
+            for (var i = 0; i < hitData.Count; i++)
+            {
+                var x = (float) BannerWidth / hitData.Count * i;
+                var y = BannerHeight / 2 + hitData[i];
+                Action<IImageProcessingContext> dings;
+                if (Math.Abs(hitData[i]) > 127)
+                    dings = mut => mut.DrawLines(Pens.Solid(HitToColor(hitData[i]), 0.5f),
+                        new PointF(x, 0), new PointF(x, graph.Height));
+                else
+                    dings = mut => mut.Fill(HitToColor(hitData[i]), new EllipsePolygon(new PointF(x, y), 2));
+                graph.Mutate(dings);
+            }
+
+            using (var output = new Image<Rgba32>(BannerWidth, BannerHeight))
+            {
                 output.Mutate(o => o
+                    .Fill(Color.Black)
                     .DrawImage(background, 0.3f)
-                    .DrawImage(img, 1f)
+                    .DrawImage(graph, 1f)
                 );
 
                 var memStream = new MemoryStream();

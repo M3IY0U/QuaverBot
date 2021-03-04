@@ -1,7 +1,7 @@
+using QuaverBot.Entities;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using QuaverBot.Entities;
 
 namespace QuaverBot.Commands
 {

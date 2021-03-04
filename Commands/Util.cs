@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Threading.Tasks;
-using DSharpPlus.Entities;
 using Newtonsoft.Json;
+using DSharpPlus.Entities;
+using System.Threading.Tasks;
 
 namespace QuaverBot.Commands
 {
