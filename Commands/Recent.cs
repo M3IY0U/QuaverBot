@@ -12,8 +12,20 @@ namespace QuaverBot.Commands
 {
     public class Recent : BaseCommandModule
     {
-        private Config _config;
+        private readonly Config _config;
         public Recent(Config config) => _config = config;
+
+        // Overload to support @mentions
+        [Command("recent"), Priority(1)]
+        public async Task GetRecentDiscordUser(CommandContext ctx, DiscordUser user = null)
+        {
+            user ??= ctx.User;
+            var qUser = _config.Users.Find(x => x.Id == user.Id);
+            if (qUser is not null)
+                await GetRecent(ctx, qUser.Name);
+            else
+                throw new Exception("User has not set their account.");
+        }
 
         [Command("recent"), Aliases("r", "rs")]
         public async Task GetRecent(CommandContext ctx, string username = "", string gamemode = "4")
@@ -69,6 +81,7 @@ namespace QuaverBot.Commands
                 .WithAuthor(
                     $"{map.title} [{map.difficulty_name}] ({Math.Round((double) map.difficulty_rating, 2)})",
                     $"https://quavergame.com/mapset/map/{recent.map.id}", $"{info.avatar_url}")
+                .WithColor(Util.DiffToColor((double) map.difficulty_rating))
                 .AddField("Grade", grade, true)
                 .AddField("Accuracy", acc, true)
                 .AddField("Performance Rating", pp, true)
@@ -79,7 +92,6 @@ namespace QuaverBot.Commands
                 .WithImageUrl(useBanner
                     ? "attachment://banner.png"
                     : $"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg")
-                .WithColor(Util.DiffToColor((double) map.difficulty_rating))
                 .WithFooter($"Played on {DateTime.Parse($"{recent.time}"):f}");
 
             if (!string.IsNullOrEmpty(mods))
