@@ -31,11 +31,15 @@ namespace QuaverBot.Graphics
                 var x = (float) BannerWidth / hitData.Count * i;
                 var y = BannerHeight / 2 + hitData[i];
                 Action<IImageProcessingContext> dings;
+                var localI = i;
                 if (Math.Abs(hitData[i]) > 127 && containsMisses)
-                    dings = mut => mut.DrawLines(Pens.Solid(HitToColor(hitData[i]), 0.5f),
+                {
+                    dings = mut => mut.DrawLines(Pens.Solid(HitToColor(hitData[localI]), 0.5f),
                         new PointF(x, 0), new PointF(x, graph.Height));
+                }
                 else
-                    dings = mut => mut.Fill(HitToColor(hitData[i]), new EllipsePolygon(new PointF(x, y), 2));
+                    dings = mut => mut.Fill(HitToColor(hitData[localI]), new EllipsePolygon(new PointF(x, y), 2));
+
                 graph.Mutate(dings);
             }
 
@@ -46,7 +50,8 @@ namespace QuaverBot.Graphics
 
             using var output = new Image<Rgba32>(BannerWidth, BannerHeight);
             output.Mutate(o => o
-                .DrawImage(background, 1f)
+                .Fill(Color.Black)
+                .DrawImage(background, hitData.Count > 0 ? 0.3f : 1f)
                 .DrawImage(graph, 1f)
             );
 

@@ -28,7 +28,7 @@ namespace QuaverBot.Commands
             else
                 throw new CommandException("User has not set their account.");
         }
-        
+
         [Command("profile"), Aliases("p")]
         public async Task GetProfile(CommandContext ctx, string username = "", string mode = "4k")
         {
@@ -67,26 +67,16 @@ namespace QuaverBot.Commands
 
         private static void AddModeStats(ref DiscordEmbedBuilder eb, GameMode gm, dynamic info)
         {
-            switch (gm)
-            {
-                case GameMode.Key4:
-                    eb.AddField("4K",
-                        $"Rank » #{info.keys4.globalRank} ({info.country} #{info.keys4.countryRank})\n" +
-                        $"Rating » {info.keys4.stats.overall_performance_rating}\n" +
-                        $"PlayCount » {info.keys4.stats.play_count} (FailCount » {info.keys4.stats.fail_count}) | Fail% » {Math.Round((int) info.keys4.stats.fail_count * 100f / (int) info.keys4.stats.play_count, 2)}%\n" +
-                        $"Total Hits » [{info.keys4.stats.total_marv}/{info.keys4.stats.total_perf}/{info.keys4.stats.total_great}/{info.keys4.stats.total_good}/{info.keys4.stats.total_okay}/{info.keys4.stats.total_miss}]\n" +
-                        $"Total Pauses » {info.keys4.stats.total_pauses} 😔", true);
-                    break;
-                case GameMode.Key7:
-                    eb.AddField("7K", $"Rank » #{info.keys4.globalRank} ({info.country} #{info.keys4.countryRank})\n" +
-                                      $"Rating » {info.keys7.stats.overall_performance_rating}\n" +
-                                      $"PlayCount » {info.keys7.stats.play_count} (FailCount » {info.keys7.stats.fail_count}) | Fail% » {Math.Round((int) info.keys7.stats.fail_count * 100f / (int) info.keys7.stats.play_count, 2)}%\n" +
-                                      $"Total Hits » [{info.keys7.stats.total_marv}/{info.keys7.stats.total_perf}/{info.keys7.stats.total_great}/{info.keys7.stats.total_good}/{info.keys7.stats.total_okay}/{info.keys7.stats.total_miss}]\n" +
-                                      $"Total Pauses » {info.keys7.stats.total_pauses} 😔", true);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(gm), gm, null);
-            }
+            var keys = info.keys7;
+            if (gm == GameMode.Key4)
+                keys = info.keys4;
+
+            eb.AddField(gm == GameMode.Key4 ? "4K" : "7K",
+                $"Rank » #{keys.globalRank} ({info.info.country} #{keys.countryRank})\n" +
+                $"Rating » {Math.Round((double) keys.stats.overall_performance_rating, 2)}\n" +
+                $"PlayCount » {keys.stats.play_count} (FailCount » {keys.stats.fail_count}) | Fail% » {Math.Round((int) keys.stats.fail_count * 100f / (int) keys.stats.play_count, 2)}%\n" +
+                $"Total Hits » [{keys.stats.total_marv}/{keys.stats.total_perf}/{keys.stats.total_great}/{keys.stats.total_good}/{keys.stats.total_okay}/{keys.stats.total_miss}]\n" +
+                $"Total Pauses » {keys.stats.total_pauses} 😔", true);
         }
     }
 }
