@@ -68,5 +68,30 @@ namespace QuaverBot.Commands
 
             _config.Save();
         }
+
+        [Command("mode")]
+        public async Task Mode(CommandContext ctx, string choice = "")
+        {
+            var user = _config.Users.Find(x => x.Id == ctx.User.Id);
+            if (user is null)
+                throw new CommandException("No Username set.");
+            switch (choice)
+            {
+                case "7":
+                case "7k":
+                    user.PreferredMode = GameMode.Key7;
+                    break;
+                case "4":
+                case "4k":
+                    user.PreferredMode = GameMode.Key4;
+                    break;
+                default:
+                    await ctx.RespondAsync($"Current preferred GameMode: {Util.ModeString(user.PreferredMode)}");
+                    return;
+            }
+
+            await ctx.RespondAsync($"Updated preferred GameMode to {Util.ModeString(user.PreferredMode)}.");
+            _config.Save();
+        }
     }
 }

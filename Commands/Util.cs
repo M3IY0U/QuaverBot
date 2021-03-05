@@ -4,6 +4,7 @@ using System.Net;
 using Newtonsoft.Json;
 using DSharpPlus.Entities;
 using System.Threading.Tasks;
+using QuaverBot.Entities;
 
 namespace QuaverBot.Commands
 {
@@ -27,7 +28,7 @@ namespace QuaverBot.Commands
             }
             catch (Exception)
             {
-                throw new Exception("User not found on Quaver.");
+                throw new CommandException("User not found on Quaver.");
             }
         }
 
@@ -41,6 +42,14 @@ namespace QuaverBot.Commands
                 > 19 and <= 28 => new DiscordColor("#CFFDF8"),
                 > 28 => new DiscordColor("#CFFDF8"),
                 _ => DiscordColor.Black
+            };
+
+        public static string ModeString(GameMode mode)
+            => mode switch
+            {
+                GameMode.Key4 => "4K",
+                GameMode.Key7 => "7K",
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
             };
     }
 }
