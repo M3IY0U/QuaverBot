@@ -48,7 +48,7 @@ namespace QuaverBot
             {
                 if (e.Exception.Message.Contains("command was not found"))
                     return;
-                await e.Context.RespondAsync($"Error: `{e.Exception.Message}`");
+                await e.Context.RespondAsync($"Error: `{e.Exception.Message}`\n```{e.Exception.StackTrace}```");
             };
             _commandsNext.RegisterCommands(Assembly.GetEntryAssembly());
         }
