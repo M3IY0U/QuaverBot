@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using System.Collections.Generic;
 using DSharpPlus.CommandsNext.Attributes;
+using QuaverBot.Entities;
 
 namespace QuaverBot.Commands
 {
@@ -17,34 +18,46 @@ namespace QuaverBot.Commands
 
         // Overload to support @mentions
         [Command("recent"), Priority(1)]
-        public async Task GetRecentDiscordUser(CommandContext ctx, DiscordUser user = null)
+        public async Task GetRecentDiscordUser(CommandContext ctx, DiscordUser user = null, string mode = "4k")
         {
             user ??= ctx.User;
             var qUser = _config.Users.Find(x => x.Id == user.Id);
             if (qUser is not null)
-                await GetRecent(ctx, qUser.Name);
+            {
+                if (mode == "4k")
+                    mode = qUser.PreferredMode == GameMode.Key4 ? "4" : "7";
+                await GetRecent(ctx, qUser.Name, mode);
+            }
             else
-                throw new Exception("User has not set their account.");
+                throw new CommandException("User has not set their account.");
         }
 
         [Command("recent"), Aliases("r", "rs")]
-        public async Task GetRecent(CommandContext ctx, string username = "", string gamemode = "4")
+        public async Task GetRecent(CommandContext ctx, string username = "", string mode = "4k")
         {
             string qid;
             if (string.IsNullOrEmpty(username))
             {
                 var user = _config.Users.Find(x => x.Id == ctx.User.Id);
                 if (user == null)
-                    throw new Exception("No Username set.");
+                    throw new CommandException("No Username set.");
                 username = user.Name;
                 qid = user.QuaverId;
             }
             else
                 qid = await Util.NameToQid(username);
 
-            var recent = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
-                $"/users/scores/recent?id={qid}&mode={(gamemode == "4" ? "1" : "2")}")).scores[0];
-
+            dynamic recent;
+            try
+            {
+                recent = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
+                    $"/users/scores/recent?id={qid}&mode={(mode.Contains("4") ? "1" : "2")}")).scores[0];
+            }
+            catch (Exception)
+            {
+                throw new CommandException("No recent plays found for queried user/gamemode.");
+            }
+            
             var map = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/maps/{recent.map.id}")).map;
 
@@ -98,14 +111,14 @@ namespace QuaverBot.Commands
                 eb.AddField("Mods", mods, true);
             if (!string.IsNullOrEmpty(pb))
                 eb.Footer.Text += $" | {pb}";
-            
+
             var reply = new DiscordMessageBuilder()
                 .WithContent($"**Most recent Quaver play for {username}:**")
                 .WithEmbed(eb.Build());
-            
+
             if (useBanner && banner is not null)
                 reply.WithFile("banner.png", banner);
-            
+
             await ctx.RespondAsync(reply);
         }
     }
