@@ -6,6 +6,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using QuaverBot.Entities;
 
 namespace QuaverBot
 {
@@ -48,7 +49,8 @@ namespace QuaverBot
             {
                 if (e.Exception.Message.Contains("command was not found"))
                     return;
-                await e.Context.RespondAsync($"Error: `{e.Exception.Message}`\n```{e.Exception.StackTrace}```");
+                await e.Context.RespondAsync(
+                    $"Error: `{e.Exception.Message}`\n{(e.Exception is CommandException ? "" : $"```{e.Exception.StackTrace}```")}");
             };
             _commandsNext.RegisterCommands(Assembly.GetEntryAssembly());
         }
