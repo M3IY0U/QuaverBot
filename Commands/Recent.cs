@@ -57,27 +57,12 @@ namespace QuaverBot.Commands
             {
                 throw new CommandException("No recent plays found for queried user/gamemode.");
             }
-            
+
             var map = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/maps/{recent.map.id}")).map;
 
             var info = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users?id={qid}")).users[0];
-
-            var useBanner = true;
-            MemoryStream banner = null;
-            try
-            {
-                var data = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
-                    $"/scores/data/{recent.id}"));
-                var hitdata = JsonConvert.DeserializeObject<List<long>>($"{data.hits}".Replace("L", ""));
-                banner = RecentGraph.CreateGraphBanner($"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg",
-                    hitdata);
-            }
-            catch (Exception)
-            {
-                useBanner = false;
-            }
 
             var grade = $"{DiscordEmoji.FromName(ctx.Client, $":{recent.grade}_Rank:")}";
             var acc = $"{Math.Round((double) recent.accuracy, 2)}%";
@@ -88,8 +73,34 @@ namespace QuaverBot.Commands
             var ratio = $"{Math.Round((double) recent.ratio, 2)}";
             var score = $"{recent.total_score}";
             var pb = recent.personal_best == true ? "Personal Best" : "";
-            var mods = recent.mods_string == "None" ? "" : recent.mods_string as string;
+            var mods = $"{recent.mods_string}" == "None" ? "" : $"{recent.mods_string}";
 
+            var progress = Math.Round((float) (recent.count_marv +
+                                               recent.count_perf +
+                                               recent.count_great +
+                                               recent.count_good +
+                                               recent.count_okay +
+                                               recent.count_miss) / (float) (map.count_hitobject_normal +
+                                                                             map.count_hitobject_long * 2f) * 100, 2);
+
+            var useBanner = true;
+            MemoryStream banner = null;
+            var hitdata = new List<long>();
+            try
+            {
+                var data = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
+                    $"/scores/data/{recent.id}"));
+                hitdata = JsonConvert.DeserializeObject<List<long>>($"{data.hits}".Replace("L", ""));
+            }
+            catch (Exception) {  /*ignored*/ }
+
+            try
+            {
+                banner = RecentGraph.CreateGraphBanner($"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg",
+                    hitdata, (int) recent.count_miss > 0, progress);
+            }
+            catch (Exception) { useBanner = false; }
+            
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(
                     $"{map.title} [{map.difficulty_name}] ({Math.Round((double) map.difficulty_rating, 2)})",
@@ -111,6 +122,8 @@ namespace QuaverBot.Commands
                 eb.AddField("Mods", mods, true);
             if (!string.IsNullOrEmpty(pb))
                 eb.Footer.Text += $" | {pb}";
+            if (progress < 100)
+                eb.AddField("Map Completion", $"{progress}%", true);
 
             var reply = new DiscordMessageBuilder()
                 .WithContent($"**Most recent Quaver play for {username}:**")

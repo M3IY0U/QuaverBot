@@ -16,22 +16,22 @@ namespace QuaverBot.Graphics
         private const int BannerWidth = 900;
         private const int BannerHeight = 250;
 
-        public static MemoryStream CreateGraphBanner(string url, List<long> hitData)
+        public static MemoryStream CreateGraphBanner(string url, List<long> hitData, bool containsMisses,
+            double progress)
         {
-            using (var client = new WebClient())
-                client.DownloadFile(url, "background.jpg");
-
-            var background = Image.Load<Rgba32>("background.jpg");
+            var background = Image.Load(new WebClient().DownloadData(url));
             var graph = new Image<Rgba32>(BannerWidth, BannerHeight);
-            graph.Mutate(mut => mut.DrawLines(Pens.Solid(Brushes.BackwardDiagonal(Color.White), 1f),
-                new PointF(0, BannerHeight / 2f), new PointF(BannerWidth, BannerHeight / 2f)));
+
+            if (hitData.Count > 0)
+                graph.Mutate(mut => mut.DrawLines(Pens.Solid(Brushes.BackwardDiagonal(Color.White), 1f),
+                    new PointF(0, BannerHeight / 2f), new PointF(BannerWidth, BannerHeight / 2f)));
 
             for (var i = 0; i < hitData.Count; i++)
             {
                 var x = (float) BannerWidth / hitData.Count * i;
                 var y = BannerHeight / 2 + hitData[i];
                 Action<IImageProcessingContext> dings;
-                if (Math.Abs(hitData[i]) > 127)
+                if (Math.Abs(hitData[i]) > 127 && containsMisses)
                     dings = mut => mut.DrawLines(Pens.Solid(HitToColor(hitData[i]), 0.5f),
                         new PointF(x, 0), new PointF(x, graph.Height));
                 else
@@ -39,19 +39,21 @@ namespace QuaverBot.Graphics
                 graph.Mutate(dings);
             }
 
-            using (var output = new Image<Rgba32>(BannerWidth, BannerHeight))
-            {
-                output.Mutate(o => o
-                    .Fill(Color.Black)
-                    .DrawImage(background, 0.3f)
-                    .DrawImage(graph, 1f)
-                );
+            if (progress < 100)
+                background.Mutate(b => b.Grayscale(.9f, new Rectangle(
+                    (int) (BannerWidth * ((float) progress / 100f)), 0,
+                    BannerWidth - (int) (BannerWidth * ((float) progress / 100f)), BannerHeight)));
 
-                var memStream = new MemoryStream();
-                output.Save(memStream, PngFormat.Instance);
-                memStream.Seek(0, SeekOrigin.Begin);
-                return memStream;
-            }
+            using var output = new Image<Rgba32>(BannerWidth, BannerHeight);
+            output.Mutate(o => o
+                .DrawImage(background, 1f)
+                .DrawImage(graph, 1f)
+            );
+
+            var memStream = new MemoryStream();
+            output.Save(memStream, PngFormat.Instance);
+            memStream.Seek(0, SeekOrigin.Begin);
+            return memStream;
         }
 
         private static Color HitToColor(long input)

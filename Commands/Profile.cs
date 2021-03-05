@@ -14,7 +14,7 @@ namespace QuaverBot.Commands
         public Profile(Config config) => _config = config;
 
         // Overload to support @mentions
-        [Command("profile"), Aliases("p"), Priority(1)]
+        [Command("profile"), Priority(1)]
         public async Task GetDiscordUserProfile(CommandContext ctx, DiscordUser user = null, string mode = "4k")
         {
             user ??= ctx.User;
