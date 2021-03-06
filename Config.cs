@@ -7,9 +7,9 @@ namespace QuaverBot
 {
     public class Config
     {
-        public string Token { get; set; }
+        public string Token;
         public string BaseUrl { get; } = "https://api.quavergame.com/v1";
-        public List<User> Users { get; set; }
+        public List<User> Users;
 
         public void Save()
             => File.WriteAllText("config.json", JsonConvert.SerializeObject(this, Formatting.Indented));

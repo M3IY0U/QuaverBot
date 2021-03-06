@@ -18,6 +18,7 @@ namespace QuaverBot
 
         public Bot()
         {
+            // config setup
             if (File.Exists("config.json"))
                 Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
             else
@@ -29,15 +30,18 @@ namespace QuaverBot
                 Environment.Exit(0);
             }
 
+            // make config available for commands through DI
             var services = new ServiceCollection()
                 .AddSingleton(Config)
                 .BuildServiceProvider();
 
+            // setup client
             _client = new DiscordClient(new DiscordConfiguration
             {
                 Token = Config.Token
             });
 
+            // setup commands
             _commandsNext = _client.UseCommandsNext(new CommandsNextConfiguration
             {
                 EnableDms = false,
@@ -45,6 +49,7 @@ namespace QuaverBot
                 Services = services
             });
 
+            // hook command error event to print stacktrace only on unintended exceptions  
             _commandsNext.CommandErrored += async (_, e) =>
             {
                 if (e.Exception.Message.Contains("command was not found"))

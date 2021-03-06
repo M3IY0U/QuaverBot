@@ -27,18 +27,19 @@ namespace QuaverBot.Graphics
             var background = Image.Load(new WebClient().DownloadData(BackgroundUrl));
             var font = SystemFonts.CreateFont("Arial", 15);
             var graph = new Image<Rgba32>(800, 300);
-
+            var minRank = data.Min(x => x.Rank);
+            var maxRank = data.Max(x => x.Rank);
             // draw background & text in the top right
             graph.Mutate(x =>
                 x.DrawImage(background, 1)
                     .DrawText("Ranking Graph", font, Color.LightGray, new PointF(5, 5)));
 
             // convert rank data to y coord, x will be set later
-            var points = data.Select(x => new PointF(0, x.Rank / (float) GraphHeight) * 1.5f).ToArray();
+            var points = data.Select(x => new PointF(0, CalculateY(x.Rank, minRank, maxRank, 40))).ToArray();
 
             for (var i = 0; i < data.Count; i++)
             {
-                // copy because jetbrains keeps telling me this dumbass warning
+                // copy to local variable because rider keeps yelling at me
                 var localI = i;
                 // set x position for ith ranking data
                 var x = (float) GraphWidth / data.Count * localI;
@@ -68,5 +69,9 @@ namespace QuaverBot.Graphics
             memStream.Seek(0, SeekOrigin.Begin);
             return memStream;
         }
+
+        // thanks twarq for this math bs 🙏
+        private static float CalculateY(long yOld, long yMin, long yMax, int padding)
+            => ((float) yOld - yMin) / ((float) yMax - yMin) * (GraphHeight - padding * 2) + padding;
     }
 }

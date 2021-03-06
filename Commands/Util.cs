@@ -35,12 +35,12 @@ namespace QuaverBot.Commands
         public static DiscordColor DiffToColor(double diff)
             => diff switch
             {
-                < 1 => new DiscordColor("#CBF7F3"),
-                > 1 and <= 3.5 => new DiscordColor("#5CF972"),
-                > 3.5 and <= 8 => new DiscordColor("#5BBEF7"),
-                > 8 and <= 19 => new DiscordColor("#B54A45"),
-                > 19 and <= 28 => new DiscordColor("#CFFDF8"),
-                > 28 => new DiscordColor("#CFFDF8"),
+                < 1 => new DiscordColor("#CBF7F3"), // beginner -> very light blue
+                > 1 and <= 3.5 => new DiscordColor("#5CF972"), // easy -> light green
+                > 3.5 and <= 8 => new DiscordColor("#5BBEF7"), // normal -> blue
+                > 8 and <= 19 => new DiscordColor("#B54A45"), // hard -> orange
+                > 19 and <= 28 => new DiscordColor("#CFFDF8"), // insane -> red
+                > 28 => new DiscordColor("#CFFDF8"), // wtf -> purple
                 _ => DiscordColor.Black
             };
 

@@ -14,36 +14,36 @@ namespace QuaverBot.Commands
         public async Task Set(CommandContext ctx, string username = "")
         {
             var user = _config.Users.Find(x => x.Id == ctx.User.Id);
+            // if no username was provided, 2 options: 1. get current name 2. usage error
             if (string.IsNullOrEmpty(username))
             {
-                if (user != null)
+                if (user is not null)
                     await ctx.RespondAsync($"Current username: `{user.Name}`.");
                 else
-                    await ctx.RespondAsync("Error: Missing username.");
+                    throw new CommandException("Missing username.");
                 return;
             }
-
-            if (user == null)
+            
+            // -> username was provided
+            if (user is null)
             {
+                // -> new user
+                // check if user exists on quaver
                 var qid = await Util.NameToQid(username);
                 if (string.IsNullOrEmpty(qid))
-                {
-                    await ctx.RespondAsync($"Error: No user with name `{username}` was found on Quaver.");
-                    return;
-                }
-
+                    throw new CommandException($"No user with name `{username}` was found on Quaver.");
+                
+                // add user to config
                 _config.Users.Add(new User {Id = ctx.User.Id, Name = username, QuaverId = qid});
                 await ctx.RespondAsync($"Username set to: `{username}` ({qid}).");
             }
             else
             {
+                // -> update user
                 var qid = await Util.NameToQid(username);
                 if (string.IsNullOrEmpty(qid))
-                {
-                    await ctx.RespondAsync($"Error: No user with name `{username}` was found on Quaver.");
-                    return;
-                }
-
+                    throw new CommandException($"No user with name `{username}` was found on Quaver.");
+ 
                 user.Name = username;
                 user.QuaverId = qid;
                 await ctx.RespondAsync($"Username updated to: `{username}` ({qid}).");
@@ -56,16 +56,11 @@ namespace QuaverBot.Commands
         public async Task UnSet(CommandContext ctx)
         {
             var user = _config.Users.Find(x => x.Id == ctx.User.Id);
-            if (user == null)
-            {
-                await ctx.RespondAsync("Error: Entry not present, can't remove.");
-            }
-            else
-            {
-                _config.Users.Remove(user);
-                await ctx.RespondAsync("Entry removed.");
-            }
+            if (user is null)
+                throw new CommandException("Entry not present, can't remove.");
 
+            _config.Users.Remove(user);
+            await ctx.RespondAsync("Entry removed.");
             _config.Save();
         }
 

@@ -20,7 +20,9 @@ namespace QuaverBot.Commands
         [Command("recent"), Priority(1)]
         public async Task GetRecentDiscordUser(CommandContext ctx, DiscordUser user = null, string mode = "4k")
         {
+            // if user was null, set it to the command user
             user ??= ctx.User;
+            // get user and mode preference, then execute main command function
             var qUser = _config.Users.Find(x => x.Id == user.Id);
             if (qUser is not null)
             {
@@ -35,6 +37,7 @@ namespace QuaverBot.Commands
         [Command("recent"), Aliases("r", "rs")]
         public async Task GetRecent(CommandContext ctx, string username = "", string mode = "4k")
         {
+            // get quaver id
             string qid;
             if (string.IsNullOrEmpty(username))
             {
@@ -47,6 +50,7 @@ namespace QuaverBot.Commands
             else
                 qid = await Util.NameToQid(username);
 
+            // get needed responses
             dynamic recent;
             try
             {
@@ -64,6 +68,7 @@ namespace QuaverBot.Commands
             var info = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users?id={qid}")).users[0];
 
+            // collect all the stats
             var grade = $"{DiscordEmoji.FromName(ctx.Client, $":{recent.grade}_Rank:")}";
             var acc = $"{Math.Round((double) recent.accuracy, 2)}%";
             var pp = $"**{Math.Round((double) recent.performance_rating, 2)}**";
@@ -74,15 +79,16 @@ namespace QuaverBot.Commands
             var score = $"{recent.total_score}";
             var pb = recent.personal_best == true ? "Personal Best" : "";
             var mods = $"{recent.mods_string}" == "None" ? "" : $"{recent.mods_string}";
-
+            var mapBannerUrl = $"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg";
             var progress = Math.Round((float) (recent.count_marv +
                                                recent.count_perf +
                                                recent.count_great +
                                                recent.count_good +
                                                recent.count_okay +
-                                               recent.count_miss) / (float) (map.count_hitobject_normal +
-                                                                             map.count_hitobject_long * 2f) * 100, 2);
+                                               recent.count_miss) /
+                (float) (map.count_hitobject_normal + map.count_hitobject_long * 2f) * 100, 2);
 
+            // setup for the map banner
             var useBanner = true;
             MemoryStream banner = null;
             var hitdata = new List<long>();
@@ -92,15 +98,22 @@ namespace QuaverBot.Commands
                     $"/scores/data/{recent.id}"));
                 hitdata = JsonConvert.DeserializeObject<List<long>>($"{data.hits}".Replace("L", ""));
             }
-            catch (Exception) {  /*ignored*/ }
+            catch (Exception)
+            {
+                /* if this fails the banner will work but wont have hits on it*/
+            }
 
             try
             {
-                banner = RecentGraph.CreateGraphBanner($"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg",
-                    hitdata, (int) recent.count_miss > 0, progress);
+                banner = RecentGraph.CreateGraphBanner(mapBannerUrl, hitdata,
+                    (int) recent.count_miss > 0, progress);
             }
-            catch (Exception) { useBanner = false; }
-            
+            catch (Exception)
+            {
+                // if this fails, no banner will be returned and it's just going to be the default map banner
+                useBanner = false;
+            }
+
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(
                     $"{map.title} [{map.difficulty_name}] ({Math.Round((double) map.difficulty_rating, 2)})",
@@ -115,9 +128,10 @@ namespace QuaverBot.Commands
                 .AddField("Score", score, true)
                 .WithImageUrl(useBanner
                     ? "attachment://banner.png"
-                    : $"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg")
+                    : mapBannerUrl)
                 .WithFooter($"Played on {DateTime.Parse($"{recent.time}"):f}");
 
+            // add optional fields
             if (!string.IsNullOrEmpty(mods))
                 eb.AddField("Mods", mods, true);
             if (!string.IsNullOrEmpty(pb))

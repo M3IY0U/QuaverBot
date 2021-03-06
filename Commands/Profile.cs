@@ -20,7 +20,9 @@ namespace QuaverBot.Commands
         [Command("profile"), Priority(1)]
         public async Task GetDiscordUserProfile(CommandContext ctx, DiscordUser user = null, string mode = "4k")
         {
+            // if user was null, set it to the command user
             user ??= ctx.User;
+            // get user and mode preference, then execute main command function
             var qUser = _config.Users.Find(x => x.Id == user.Id);
             if (qUser is not null)
             {
@@ -35,6 +37,7 @@ namespace QuaverBot.Commands
         [Command("profile"), Aliases("p")]
         public async Task GetProfile(CommandContext ctx, string username = "", string mode = "4k")
         {
+            // get quaver id
             string qid;
             var gm = GameMode.Key4;
             if (string.IsNullOrEmpty(username))
@@ -51,11 +54,13 @@ namespace QuaverBot.Commands
             if (mode.Contains("7"))
                 gm = GameMode.Key7;
 
+            // get the two needed responses
             var fullInfo = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users/full/{qid}")).user;
             var graphData = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users/graph/rank?id={qid}&mode=1")).statistics;
 
+            // create a representation of the users rank in the past 10 days
             var graph = JsonConvert.DeserializeObject<List<RankAtTime>>($"{graphData}");
             MemoryStream img = null;
             var useImg = true;
@@ -68,15 +73,15 @@ namespace QuaverBot.Commands
                 useImg = false;
             }
 
+            // create embed & send it
             var info = fullInfo.info;
-
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor($"{info.username}'s Quaver profile", $"https://quavergame.com/user/{qid}")
                 .WithColor(ctx.Member.Color)
                 .WithThumbnail($"{info.avatar_url}")
                 .WithFooter("Currently " + (bool.Parse($"{info.online}") ? "online" : "offline"));
             AddModeStats(ref eb, gm, fullInfo);
-
+            
             var reply = new DiscordMessageBuilder();
 
             if (useImg && img is not null)
@@ -90,6 +95,7 @@ namespace QuaverBot.Commands
 
         private static void AddModeStats(ref DiscordEmbedBuilder eb, GameMode gm, dynamic info)
         {
+            // add the actually relevant information to the embed
             var keys = info.keys7;
             if (gm == GameMode.Key4)
                 keys = info.keys4;
