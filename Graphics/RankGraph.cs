@@ -24,13 +24,13 @@ namespace QuaverBot.Graphics
         {
             // setup
             data = data.TakeLast(10).ToList();
-            if(data.Last().Rank != currentRank)
-                data[9].Rank = currentRank;
+            data.Last().Rank = currentRank;
             var background = Image.Load(new WebClient().DownloadData(BackgroundUrl));
             var font = SystemFonts.CreateFont("Arial", 15);
             var graph = new Image<Rgba32>(800, 300);
             var minRank = data.Min(x => x.Rank);
             var maxRank = data.Max(x => x.Rank);
+            
             // draw background & text in the top left
             graph.Mutate(x =>
                 x.DrawImage(background, 1)
