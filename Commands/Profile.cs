@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Newtonsoft.Json;
 using QuaverBot.Entities;
+using QuaverBot.Graphics;
 
 namespace QuaverBot.Commands
 {
@@ -50,8 +53,20 @@ namespace QuaverBot.Commands
 
             var fullInfo = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users/full/{qid}")).user;
-            var graph = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
+            var graphData = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users/graph/rank?id={qid}&mode=1")).statistics;
+
+            var graph = JsonConvert.DeserializeObject<List<RankAtTime>>($"{graphData}");
+            MemoryStream img = null;
+            var useImg = true;
+            try
+            {
+                img = RankGraph.CreateGraphBanner(graph);
+            }
+            catch (Exception)
+            {
+                useImg = false;
+            }
 
             var info = fullInfo.info;
 
@@ -62,7 +77,15 @@ namespace QuaverBot.Commands
                 .WithFooter("Currently " + (bool.Parse($"{info.online}") ? "online" : "offline"));
             AddModeStats(ref eb, gm, fullInfo);
 
-            await ctx.RespondAsync(eb.Build());
+            var reply = new DiscordMessageBuilder();
+
+            if (useImg && img is not null)
+            {
+                reply.WithFile("graph.png", img);
+                eb.WithImageUrl("attachment://graph.png");
+            }
+
+            await ctx.RespondAsync(reply.WithEmbed(eb.Build()));
         }
 
         private static void AddModeStats(ref DiscordEmbedBuilder eb, GameMode gm, dynamic info)
