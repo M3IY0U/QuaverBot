@@ -66,7 +66,8 @@ namespace QuaverBot.Commands
             var useImg = true;
             try
             {
-                img = RankGraph.CreateGraphBanner(graph);
+                img = RankGraph.CreateGraphBanner(graph,
+                    gm == GameMode.Key4 ? (long) fullInfo.keys4.globalRank : (long) fullInfo.keys7.globalRank);
             }
             catch (Exception)
             {
@@ -81,7 +82,7 @@ namespace QuaverBot.Commands
                 .WithThumbnail($"{info.avatar_url}")
                 .WithFooter("Currently " + (bool.Parse($"{info.online}") ? "online" : "offline"));
             AddModeStats(ref eb, gm, fullInfo);
-            
+
             var reply = new DiscordMessageBuilder();
 
             if (useImg && img is not null)
