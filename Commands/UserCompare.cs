@@ -19,23 +19,23 @@ namespace QuaverBot.Commands
         public async Task CompareUsers(CommandContext ctx, string otherUser, string username = "")
         {
             // get quaver ids
-            string qid;
+            string qid1;
             var mode = GameMode.Key4;
             if (string.IsNullOrEmpty(username))
             {
                 var user = _config.Users.Find(x => x.Id == ctx.User.Id);
                 if (user == null)
                     throw new CommandException("No Username set.");
-                qid = user.QuaverId;
+                qid1 = user.QuaverId;
                 mode = user.PreferredMode;
             }
             else
-                qid = await Util.NameToQid(username);
+                qid1 = await Util.NameToQid(username);
             var qid2 = await Util.NameToQid(otherUser);
             
             // get user info
             var u1 = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl + 
-                                                                               $"/users/full/{qid}")).user;
+                                                                               $"/users/full/{qid1}")).user;
             var u2 = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                                                                                $"/users/full/{qid2}")).user;
             // set the correct usernames

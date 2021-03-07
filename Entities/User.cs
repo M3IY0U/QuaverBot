@@ -7,10 +7,4 @@ namespace QuaverBot.Entities
         public string QuaverId { get; set; }
         public GameMode PreferredMode { get; set; }
     }
-
-    public enum GameMode
-    {
-        Key4,
-        Key7
-    }
 }

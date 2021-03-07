@@ -45,7 +45,7 @@ namespace QuaverBot
             _commandsNext = _client.UseCommandsNext(new CommandsNextConfiguration
             {
                 EnableDms = false,
-                StringPrefixes = new[] {"q", "q!"},
+                StringPrefixes = Config.Prefixes,
                 Services = services
             });
 

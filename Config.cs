@@ -7,6 +7,7 @@ namespace QuaverBot
 {
     public class Config
     {
+        public List<string> Prefixes { get; set; } = new() {"q", "q!"};
         public string Token;
         public string BaseUrl { get; } = "https://api.quavergame.com/v1";
         public List<User> Users;
