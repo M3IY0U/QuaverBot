@@ -3,7 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using QuaverBot.Entities;
 
-namespace QuaverBot
+namespace QuaverBot.Core
 {
     public class Config
     {
@@ -11,6 +11,7 @@ namespace QuaverBot
         public string Token;
         public string BaseUrl { get; } = "https://api.quavergame.com/v1";
         public List<User> Users;
+        public List<Guild> Guilds;
 
         public void Save()
             => File.WriteAllText("config.json", JsonConvert.SerializeObject(this, Formatting.Indented));

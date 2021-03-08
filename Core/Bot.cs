@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -8,12 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using QuaverBot.Entities;
 
-namespace QuaverBot
+namespace QuaverBot.Core
 {
     public class Bot : IDisposable
     {
         private readonly DiscordClient _client;
         private CommandsNextExtension _commandsNext;
+        private static readonly Regex ChartRegex = new(@"https?:\/\/quavergame.com\/mapset\/(\d)+");
         private Config Config { get; }
 
         public Bot()
@@ -52,10 +54,18 @@ namespace QuaverBot
             // hook command error event to print stacktrace only on unintended exceptions  
             _commandsNext.CommandErrored += async (_, e) =>
             {
-                if (e.Exception.Message.Contains("command was not found"))
-                    return;
-                await e.Context.RespondAsync(
-                    $"Error: `{e.Exception.Message}`\n{(e.Exception is CommandException ? "" : $"```{e.Exception.StackTrace}```")}");
+                if (e.Exception.Message.Contains("command was not found")) return;
+                await e.Context.RespondAsync($"Error: `{e.Exception.Message}`\n{(e.Exception is CommandException ? "" : $"```{e.Exception.StackTrace}```")}");
+            };
+            
+            // hook message event to log chart id if link was sent
+            _client.MessageCreated += (_, args) =>
+            {
+                if (!ChartRegex.IsMatch(args.Message.Content)) return Task.CompletedTask;
+                var id = ChartRegex.Match(args.Message.Content).Value;
+                Config.Guilds.Find(x => x.Id == args.Guild.Id)?
+                    .UpdateChartInChannel(args.Channel.Id, Convert.ToInt64(id.Substring(id.LastIndexOf('/') + 1)));
+                return Task.CompletedTask;
             };
             _commandsNext.RegisterCommands(Assembly.GetEntryAssembly());
         }

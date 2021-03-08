@@ -1,4 +1,6 @@
-﻿namespace QuaverBot
+using QuaverBot.Core;
+
+namespace QuaverBot
 {
     class Program
     {

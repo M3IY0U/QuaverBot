@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using System.Collections.Generic;
 using DSharpPlus.CommandsNext.Attributes;
+using QuaverBot.Core;
 using QuaverBot.Entities;
 
 namespace QuaverBot.Commands
