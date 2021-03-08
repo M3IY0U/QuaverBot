@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -15,7 +16,7 @@ namespace QuaverBot.Core
     {
         private readonly DiscordClient _client;
         private CommandsNextExtension _commandsNext;
-        private static readonly Regex ChartRegex = new(@"https?:\/\/quavergame.com\/mapset\/(\d)+");
+        private static readonly Regex ChartRegex = new(@"https?://quavergame\.com/mapset/map/(\d)+/?");
         private Config Config { get; }
 
         public Bot()
@@ -55,16 +56,30 @@ namespace QuaverBot.Core
             _commandsNext.CommandErrored += async (_, e) =>
             {
                 if (e.Exception.Message.Contains("command was not found")) return;
-                await e.Context.RespondAsync($"Error: `{e.Exception.Message}`\n{(e.Exception is CommandException ? "" : $"```{e.Exception.StackTrace}```")}");
+                await e.Context.RespondAsync(
+                    $"Error: `{e.Exception.Message}`\n{(e.Exception is CommandException ? "" : $"```{e.Exception.StackTrace}```")}");
             };
-            
+
             // hook message event to log chart id if link was sent
             _client.MessageCreated += (_, args) =>
             {
                 if (!ChartRegex.IsMatch(args.Message.Content)) return Task.CompletedTask;
                 var id = ChartRegex.Match(args.Message.Content).Value;
-                Config.Guilds.Find(x => x.Id == args.Guild.Id)?
+                Config.GetGuild(args.Guild.Id)
                     .UpdateChartInChannel(args.Channel.Id, Convert.ToInt64(id.Substring(id.LastIndexOf('/') + 1)));
+                return Task.CompletedTask;
+            };
+
+            _client.Ready += (sender, _) =>
+            {
+                Config.Guilds ??= new List<Guild>();
+                foreach (var (id, _) in sender.Guilds)
+                {
+                    if (!Config.Guilds.Exists(g => g.Id == id))
+                        Config.Guilds.Add(new Guild {Id = id, NewRankedMapsUpdates = false, QuaverChannel = 0});
+                }
+
+                Config.Save();
                 return Task.CompletedTask;
             };
             _commandsNext.RegisterCommands(Assembly.GetEntryAssembly());
