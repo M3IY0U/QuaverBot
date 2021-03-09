@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using QuaverBot.Entities;
@@ -16,7 +17,8 @@ namespace QuaverBot.Core
     {
         private readonly DiscordClient _client;
         private CommandsNextExtension _commandsNext;
-        private static readonly Regex ChartRegex = new(@"https?://quavergame\.com/mapset/map/(\d)+/?");
+        private static readonly Regex MapSetRegex = new(@"https?://quavergame\.com/mapset/(\d)+/?");
+        private static readonly Regex MapRegex = new(@"https?://quavergame\.com/mapset/map/(\d)+/?");
         private Config Config { get; }
 
         public Bot()
@@ -52,6 +54,7 @@ namespace QuaverBot.Core
                 Services = services
             });
 
+            _client.UseInteractivity();
             // hook command error event to print stacktrace only on unintended exceptions  
             _commandsNext.CommandErrored += async (_, e) =>
             {
@@ -63,10 +66,21 @@ namespace QuaverBot.Core
             // hook message event to log chart id if link was sent
             _client.MessageCreated += (_, args) =>
             {
-                if (!ChartRegex.IsMatch(args.Message.Content)) return Task.CompletedTask;
-                var id = ChartRegex.Match(args.Message.Content).Value;
+                if (args.Author.IsBot || string.IsNullOrEmpty(args.Message.Content)) return Task.CompletedTask;
+                var content = args.Message.Content;
+                string id;
+
+                if (MapRegex.IsMatch(content))
+                    id = MapRegex.Match(args.Message.Content).Value;
+                else if (MapSetRegex.IsMatch(content))
+                    id = MapSetRegex.Match(args.Message.Content).Value;
+                else
+                    return Task.CompletedTask;
+
                 Config.GetGuild(args.Guild.Id)
-                    .UpdateChartInChannel(args.Channel.Id, Convert.ToInt64(id.Substring(id.LastIndexOf('/') + 1)));
+                    .UpdateChartInChannel(args.Channel.Id, Convert.ToInt64(id.Substring(id.LastIndexOf('/') + 1)),
+                        false);
+
                 return Task.CompletedTask;
             };
 
