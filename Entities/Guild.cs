@@ -9,9 +9,11 @@ namespace QuaverBot.Entities
         public ulong QuaverChannel { get; set; }
         public bool NewRankedMapsUpdates { get; set; }
 
-        [JsonIgnore] private ConcurrentDictionary<ulong, long> MapLog = new();
+        [JsonIgnore] private ConcurrentDictionary<ulong, long> ChartLog = new();
 
+        public long GetLatestMap(ulong channel)
+            => ChartLog[channel];
         public void UpdateChartInChannel(ulong channel, long chartId)
-            => MapLog.AddOrUpdate(channel, chartId, (_, _) => chartId);
+            => ChartLog.AddOrUpdate(channel, chartId, (_, _) => chartId);
     }
 }

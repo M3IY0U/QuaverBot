@@ -59,7 +59,7 @@ namespace QuaverBot.Commands
             var fullInfo = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
                 $"/users/full/{qid}")).user;
             var graphData = JsonConvert.DeserializeObject<dynamic>(await Util.ApiCall(_config.BaseUrl +
-                $"/users/graph/rank?id={qid}&mode=1")).statistics;
+                $"/users/graph/rank?id={qid}&mode=" + (gm == GameMode.Key4 ? "1" : "2"))).statistics;
 
             // create a representation of the users rank in the past 10 days
             var graph = JsonConvert.DeserializeObject<List<RankAtTime>>($"{graphData}");
@@ -78,7 +78,9 @@ namespace QuaverBot.Commands
             // create embed & send it
             var info = fullInfo.info;
             var eb = new DiscordEmbedBuilder()
-                .WithAuthor($"{info.username}'s Quaver profile", $"https://quavergame.com/user/{qid}")
+                .WithAuthor($"{info.username}'s Profile")
+                .WithDescription(
+                    $"[Quaver](https://quavergame.com/user/{qid}) | [Steam](https://steamcommunity.com/profile/{info.steam_id})")
                 .WithColor(ctx.Member.Color)
                 .WithThumbnail($"{info.avatar_url}")
                 .WithFooter("Currently " + (bool.Parse($"{info.online}") ? "online" : "offline"));
@@ -103,11 +105,12 @@ namespace QuaverBot.Commands
                 keys = info.keys4;
 
             eb.AddField(gm == GameMode.Key4 ? "4K" : "7K",
-                $"Rank » #{keys.globalRank} ({info.info.country} #{keys.countryRank})\n" +
-                $"Rating » {Math.Round((double) keys.stats.overall_performance_rating, 2)}\n" +
-                $"PlayCount » {keys.stats.play_count} (FailCount » {keys.stats.fail_count}) | Fail% » {Math.Round((int) keys.stats.fail_count * 100f / (int) keys.stats.play_count, 2)}%\n" +
-                $"Total Hits » [{keys.stats.total_marv}/{keys.stats.total_perf}/{keys.stats.total_great}/{keys.stats.total_good}/{keys.stats.total_okay}/{keys.stats.total_miss}]\n" +
-                $"Total Pauses » {keys.stats.total_pauses} 😔", true);
+                $"Rank » **#{keys.globalRank}** ({info.info.country} **#{keys.countryRank}**)\n" +
+                $"Performance Rating » **{Math.Round((double) keys.stats.overall_performance_rating, 2)}**\n" +
+                $"Accuracy » **{Math.Round((double) keys.stats.overall_accuracy, 2)}%**\n" +
+                $"PlayCount » **{keys.stats.play_count}** (Fails » {keys.stats.fail_count}) | Success% » {Math.Round(100 - (int) keys.stats.fail_count * 100f / (int) keys.stats.play_count, 2)}%\n" +
+                $"Judgements »\n**⚪ {keys.stats.total_marv} 🟡 {keys.stats.total_perf} 🟢 {keys.stats.total_great}\n" +
+                $"🔵 {keys.stats.total_good} 🟣 {keys.stats.total_okay} 🔴 {keys.stats.total_miss}**\n");
         }
     }
 }

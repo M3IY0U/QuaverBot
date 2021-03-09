@@ -54,16 +54,16 @@ namespace QuaverBot.Graphics
                 points[i].X = x + 40;
             }
 
+            // draw the actual graph
+            graph.Mutate(x => x.DrawLines(Pens.Solid(Color.White, 2), points));
+
             // draw ranking numbers & dots for the graph 
             var j = 0;
             data.ForEach(x => graph.Mutate(g =>
             {
+                g.Fill(Color.FromRgb(9, 164, 198), new EllipsePolygon(points[j++], 4));
                 g.DrawText($"#{x.Rank}", font, Color.White, points[j]);
-                g.Fill(Color.White, new EllipsePolygon(points[j++], 3));
             }));
-
-            // draw the actual graph
-            graph.Mutate(x => x.DrawLines(Pens.Solid(Color.White, 1), points));
 
             // return the image
             var memStream = new MemoryStream();
