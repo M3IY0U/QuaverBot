@@ -61,8 +61,9 @@ namespace QuaverBot.Graphics
             var j = 0;
             data.ForEach(x => graph.Mutate(g =>
             {
-                g.Fill(Color.FromRgb(9, 164, 198), new EllipsePolygon(points[j++], 4));
+                g.Fill(Color.FromRgb(9, 164, 198), new EllipsePolygon(points[j], 4));
                 g.DrawText($"#{x.Rank}", font, Color.White, points[j]);
+                j++;
             }));
 
             // return the image

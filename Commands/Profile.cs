@@ -32,10 +32,10 @@ namespace QuaverBot.Commands
                 await GetProfile(ctx, qUser.Name, mode);
             }
             else
-                throw new CommandException("User has not set their account.");
+                throw new CommandException("User has not set their account. Use qset [name] to set it.");
         }
 
-        [Command("profile"), Aliases("p")]
+        [Command("profile"), Aliases("p"), Priority(2)]
         public async Task GetProfile(CommandContext ctx, string username = "", string mode = "4k")
         {
             // get quaver id
@@ -45,7 +45,7 @@ namespace QuaverBot.Commands
             {
                 var user = _config.Users.Find(x => x.Id == ctx.User.Id);
                 if (user == null)
-                    throw new CommandException("No Username set.");
+                    throw new CommandException("User has not set their account. Use qset [name] to set it.");
                 gm = user.PreferredMode;
                 qid = user.QuaverId;
             }
@@ -105,11 +105,11 @@ namespace QuaverBot.Commands
                 keys = info.keys4;
 
             eb.AddField(gm == GameMode.Key4 ? "4K" : "7K",
-                $"Rank » **#{keys.globalRank}** ({info.info.country} **#{keys.countryRank}**)\n" +
-                $"Performance Rating » **{Math.Round((double) keys.stats.overall_performance_rating, 2)}**\n" +
-                $"Accuracy » **{Math.Round((double) keys.stats.overall_accuracy, 2)}%**\n" +
-                $"PlayCount » **{keys.stats.play_count}** (Fails » {keys.stats.fail_count}) | Success% » {Math.Round(100 - (int) keys.stats.fail_count * 100f / (int) keys.stats.play_count, 2)}%\n" +
-                $"Judgements »\n**⚪ {keys.stats.total_marv} 🟡 {keys.stats.total_perf} 🟢 {keys.stats.total_great}\n" +
+                $"Rank: **#{keys.globalRank}** ({info.info.country} **#{keys.countryRank}**)\n" +
+                $"Performance Rating: **{Math.Round((double) keys.stats.overall_performance_rating, 2)}**\n" +
+                $"Accuracy: **{Math.Round((double) keys.stats.overall_accuracy, 2)}%**\n" +
+                $"PlayCount: **{keys.stats.play_count}** (Fails: {keys.stats.fail_count}) 🔹 Success%: {Math.Round(100 - (int) keys.stats.fail_count * 100f / (int) keys.stats.play_count, 2)}%\n" +
+                $"Judgements:\n**⚪ {keys.stats.total_marv} 🟡 {keys.stats.total_perf} 🟢 {keys.stats.total_great}\n" +
                 $"🔵 {keys.stats.total_good} 🟣 {keys.stats.total_okay} 🔴 {keys.stats.total_miss}**\n");
         }
     }

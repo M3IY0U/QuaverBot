@@ -18,7 +18,7 @@ namespace QuaverBot.Commands
         private readonly Config _config;
         public Map(Config config) => _config = config;
 
-        [Command("map"), Aliases("chart")]
+        [Command("mapsearch"), Aliases("ms", "cs")]
         public async Task MapGroupCommand(CommandContext ctx, [RemainingText] string search = "")
         {
             var pages = await SearchForMapset(search, ctx);
@@ -34,18 +34,21 @@ namespace QuaverBot.Commands
             }
         }
 
-        [Command("mapinfo"), Aliases("mi", "ci", "chi", "chartinfo")]
+        [Command("map"), Aliases("m", "c")]
         public async Task MapInfo(CommandContext ctx, string input = "")
         {
+            // setup
             var guild = _config.GetGuild(ctx.Guild.Id);
             long id;
             bool isSet;
+            // whether an url was provided or the last map in the channel was meant
             if (string.IsNullOrEmpty(input))
             {
                 (id, isSet) = guild.GetLatestMap(ctx.Channel.Id);
             }
             else
             {
+                // get map(set) id from url
                 string match;
                 if (Bot.MapRegex.IsMatch(input))
                 {
@@ -61,6 +64,7 @@ namespace QuaverBot.Commands
                     throw new CommandException("Map link was not recognized");
                 id = Convert.ToInt64(match.Substring(match.LastIndexOf('/') + 1));
             }
+            // gather info & send
             var info = isSet ? await Util.GetMapSetInfo(id) : await Util.GetMapInfo(id);
             await ctx.RespondAsync(info);
         }
@@ -103,7 +107,7 @@ namespace QuaverBot.Commands
                 // collect difficulties in set
                 desc = mapsInset.Aggregate(desc,
                     (current, map) => current +
-                                      $"» **[{map.difficulty_name}](https://api.quavergame.com/d/web/map/{map.id})**" +
+                                      $"🔹 **[{map.difficulty_name}](https://api.quavergame.com/d/web/map/{map.id})**" +
                                       $" ({Math.Round((double) map.difficulty_rating, 2)})\n");
 
                 // add info to embed

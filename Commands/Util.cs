@@ -74,14 +74,14 @@ namespace QuaverBot.Commands
                 keys = "4/7K";
 
             var desc =
-                $"{ranked} ❙ {keys}\nLength: **{TimeSpan.FromMilliseconds((double) maps.First().length):mm\\:ss}** ❙ BPM: **{maps.First().bpm} ♪**";
+                $"{ranked} 🔹 {keys}\nLength: **{TimeSpan.FromMilliseconds((double) maps.First().length):mm\\:ss}** 🔹 BPM: **{maps.First().bpm} ♪**";
 
             var diffs = maps.Aggregate("",
                 (current, map) =>
-                    current + $"» **[{map.difficulty_name}](https://api.quavergame.com/d/web/map/{map.id})** " +
-                    $"({Math.Round((double) map.difficulty_rating, 2)}) ❙ " +
-                    $"Combo: **{map.count_hitobject_normal + map.count_hitobject_long * 2}x** ❙ " +
-                    $"QR for SS: **{Math.Round((double) map.difficulty_rating * Math.Pow(100d / 98, 6), 2)}**\n");
+                    current + $"🔹 **[{map.difficulty_name}](https://api.quavergame.com/d/web/map/{map.id})** " +
+                    $"({Math.Round((double) map.difficulty_rating, 2)}) 🔹 " +
+                    $"Combo: **{map.count_hitobject_normal + map.count_hitobject_long * 2}x** 🔹 " +
+                    $"QR for SS: **{Math.Round((double) map.difficulty_rating * Math.Pow(99d / 98, 6), 2)}**\n");
 
             var eb = new DiscordEmbedBuilder()
                 .WithTitle($"{set.artist} - {set.title}")
@@ -107,18 +107,17 @@ namespace QuaverBot.Commands
                 .WithUrl($"https://quavergame.com/mapset/map/{map.id}")
                 .WithDescription(
                     $"Mapped by: [{map.creator_username}](https://quavergame.com/user/{map.creator_id})\n" +
-                    $"Difficulty: **{Math.Round(difficulty, 2)}** » BPM: **{map.bpm}♪**\n" +
-                    $"Max Combo: {map.count_hitobject_normal + map.count_hitobject_long * 2}x » Length: **{TimeSpan.FromMilliseconds((double) map.length):mm\\:ss}**\n" +
-                    $"PlayCount: {map.play_count} » Success%: {Math.Round(100 - (int) map.fail_count * 100f / (int) map.play_count, 2)}%\n" +
+                    $"Difficulty: **{Math.Round(difficulty, 2)}** 🔹 BPM: **{map.bpm}♪**\n" +
+                    $"Max Combo: {map.count_hitobject_normal + map.count_hitobject_long * 2}x 🔹 Length: **{TimeSpan.FromMilliseconds((double) map.length):mm\\:ss}**\n" +
+                    $"PlayCount: {map.play_count} 🔹 Success%: {Math.Round(100 - (int) map.fail_count * 100f / (int) map.play_count, 2)}%\n" +
                     $"[Download](https://api.quavergame.com/d/web/map/{map.id})")
                 .AddField("Potential Rating",
-                    $"100%: {Math.Round(difficulty * Math.Pow(100d / 98, 6), 2)}QR » " +
-                    $"95%: {Math.Round(difficulty * Math.Pow(95d / 98, 6), 2)}QR » " +
+                    $"100%: {Math.Round(difficulty * Math.Pow(100d / 98, 6), 2)}QR 🔹 " +
+                    $"95%: {Math.Round(difficulty * Math.Pow(95d / 98, 6), 2)}QR 🔹 " +
                     $"90%: {Math.Round(difficulty * Math.Pow(90d / 98, 6), 2)}QR", true)
                 .WithImageUrl($"https://cdn.quavergame.com/mapsets/{map.mapset_id}.jpg")
                 .WithFooter($"Map last updated on {DateTime.Parse($"{map.date_last_updated}"):f}");
-
-
+            
             return eb.Build();
         }
     }

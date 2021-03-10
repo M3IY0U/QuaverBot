@@ -32,10 +32,10 @@ namespace QuaverBot.Commands
                 await GetRecent(ctx, qUser.Name, mode);
             }
             else
-                throw new CommandException("User has not set their account.");
+                throw new CommandException("User has not set their account. Use qset [name] to set it.");
         }
 
-        [Command("recent"), Aliases("r", "rs")]
+        [Command("recent"), Aliases("r", "rs"), Priority(2)]
         public async Task GetRecent(CommandContext ctx, string username = "", string mode = "4k")
         {
             // get quaver id
@@ -44,7 +44,7 @@ namespace QuaverBot.Commands
             {
                 var user = _config.Users.Find(x => x.Id == ctx.User.Id);
                 if (user == null)
-                    throw new CommandException("No Username set.");
+                    throw new CommandException("No Username set. Use qset [name] to set it.");
                 username = user.Name;
                 qid = user.QuaverId;
             }
@@ -142,7 +142,6 @@ namespace QuaverBot.Commands
                 eb.AddField("Map Completion", $"{progress}%", true);
 
             var reply = new DiscordMessageBuilder()
-                .WithContent($"**Most recent Quaver play for {username}:**")
                 .WithEmbed(eb.Build());
 
             if (useBanner && banner is not null)
