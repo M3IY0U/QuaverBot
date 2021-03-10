@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using QuaverBot.Core;
@@ -12,7 +13,7 @@ namespace QuaverBot.Commands
         private Config _config;
         public GuildConfig(Config config) => _config = config;
 
-        [Command("channel")]
+        [Command("channel"), RequireUserPermissions(Permissions.ManageMessages)]
         public async Task SetQuaverChannel(CommandContext ctx, string channel = "")
         {
             var guild = _config.GetGuild(ctx.Guild.Id);
@@ -39,9 +40,33 @@ namespace QuaverBot.Commands
                 _config.Save();
             }
         }
+        
+        [Command("automapinfo"), Aliases("ami"), RequireUserPermissions(Permissions.ManageMessages)]
+        public async Task ToggleAutoMapInfo(CommandContext ctx, string setting = "")
+        {
+            var guild = _config.GetGuild(ctx.Guild.Id);
+            if (string.IsNullOrEmpty(setting))
+            {
+                await ctx.RespondAsync(
+                    $"Automatic Quaver map info is currently set to: {guild.AutomaticMapInfo}");
+                return;
+            }
 
-        [Command("rankedupdates"), Aliases("ru")]
-        public async Task EnableRankedUpdates(CommandContext ctx, string setting = "")
+            try
+            {
+                guild.AutomaticMapInfo = bool.Parse(setting);
+            }
+            catch (Exception e)
+            {
+                throw new CommandException(e.Message);
+            }
+
+            await ctx.RespondAsync($"Set automatic map info to: {guild.AutomaticMapInfo}");
+            _config.Save();
+        }
+
+        [Command("rankedupdates"), Aliases("ru"), RequireUserPermissions(Permissions.ManageMessages)]
+        public async Task ToggleRankedUpdates(CommandContext ctx, string setting = "")
         {
             var guild = _config.GetGuild(ctx.Guild.Id);
             if (string.IsNullOrEmpty(setting))

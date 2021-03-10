@@ -34,6 +34,37 @@ namespace QuaverBot.Commands
             }
         }
 
+        [Command("mapinfo"), Aliases("mi", "ci", "chi", "chartinfo")]
+        public async Task MapInfo(CommandContext ctx, string input = "")
+        {
+            var guild = _config.GetGuild(ctx.Guild.Id);
+            long id;
+            bool isSet;
+            if (string.IsNullOrEmpty(input))
+            {
+                (id, isSet) = guild.GetLatestMap(ctx.Channel.Id);
+            }
+            else
+            {
+                string match;
+                if (Bot.MapRegex.IsMatch(input))
+                {
+                    match = Bot.MapRegex.Match(input).Value;
+                    isSet = false;
+                }
+                else if(Bot.MapSetRegex.IsMatch(input))
+                {
+                    match = Bot.MapSetRegex.Match(input).Value;
+                    isSet = true;
+                }
+                else
+                    throw new CommandException("Map link was not recognized");
+                id = Convert.ToInt64(match.Substring(match.LastIndexOf('/') + 1));
+            }
+            var info = isSet ? await Util.GetMapSetInfo(id) : await Util.GetMapInfo(id);
+            await ctx.RespondAsync(info);
+        }
+
         private async Task<List<Page>> SearchForMapset(string search, CommandContext ctx)
         {
             // setup 
@@ -59,8 +90,8 @@ namespace QuaverBot.Commands
                 // get bpm
                 var bpms = JsonConvert.DeserializeObject<List<double>>($"{mapset.bpms}");
                 var bpmstring = bpms != null && bpms.Count > 1
-                    ? $"{bpms.Min()} - {bpms.Max()} ({bpms.Average()})"
-                    : $"{bpms!.First()}";
+                    ? $"{bpms.Min()}♪ - {bpms.Max()}♪ ({bpms.Average()})♪"
+                    : $"{bpms!.First()}♪";
 
                 // get maps in set
                 var setResponse =
@@ -76,7 +107,7 @@ namespace QuaverBot.Commands
                                       $" ({Math.Round((double) map.difficulty_rating, 2)})\n");
 
                 // add info to embed
-                eb.WithTitle($"{mapset.artist} - {mapset.title} charted by {mapset.creator_username}")
+                eb.WithTitle($"{mapset.artist} - {mapset.title} mapped by {mapset.creator_username}")
                     .WithDescription(desc)
                     .WithUrl($"https://quavergame.com/mapset/{mapset.id}")
                     .AddField("Length", $"{TimeSpan.FromSeconds((double) mapset.min_length_seconds):mm\\:ss}", true)

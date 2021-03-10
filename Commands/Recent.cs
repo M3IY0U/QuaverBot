@@ -117,16 +117,17 @@ namespace QuaverBot.Commands
 
             var eb = new DiscordEmbedBuilder()
                 .WithAuthor(
-                    $"{map.title} [{map.difficulty_name}] ({Math.Round((double) map.difficulty_rating, 2)})",
-                    $"https://quavergame.com/mapset/map/{recent.map.id}", $"{info.avatar_url}")
+                    $"{username}'s most recent play", $"https://quavergame.com/user/{qid}", $"{info.avatar_url}")
+                .WithTitle($"{map.title} [{map.difficulty_name}] ({Math.Round((double) map.difficulty_rating, 2)})")
+                .WithUrl($"https://quavergame.com/mapset/map/{recent.map.id}")
                 .WithColor(Util.DiffToColor((double) map.difficulty_rating))
                 .AddField("Grade", grade, true)
                 .AddField("Accuracy", acc, true)
                 .AddField("Performance Rating", pp, true)
-                .AddField("Hits", hits, true)
                 .AddField("Combo", combo, true)
                 .AddField("Ratio", ratio, true)
                 .AddField("Score", score, true)
+                .AddField("Judgements", hits, true)
                 .WithImageUrl(useBanner
                     ? "attachment://banner.png"
                     : mapBannerUrl)
@@ -148,6 +149,7 @@ namespace QuaverBot.Commands
                 reply.WithFile("banner.png", banner);
 
             await ctx.RespondAsync(reply);
+            _config.GetGuild(ctx.Guild.Id).UpdateChartInChannel(ctx.Channel.Id, (long) recent.map.id, false);
         }
     }
 }

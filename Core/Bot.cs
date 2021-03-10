@@ -9,6 +9,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.Interactivity.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using QuaverBot.Commands;
 using QuaverBot.Entities;
 
 namespace QuaverBot.Core
@@ -17,8 +18,8 @@ namespace QuaverBot.Core
     {
         private readonly DiscordClient _client;
         private CommandsNextExtension _commandsNext;
-        private static readonly Regex MapSetRegex = new(@"https?://quavergame\.com/mapset/(\d)+/?");
-        private static readonly Regex MapRegex = new(@"https?://quavergame\.com/mapset/map/(\d)+/?");
+        internal static readonly Regex MapSetRegex = new(@"https?://quavergame\.com/mapset/(\d)+/?");
+        internal static readonly Regex MapRegex = new(@"https?://quavergame\.com/mapset/map/(\d)+/?");
         private Config Config { get; }
 
         public Bot()
@@ -64,24 +65,36 @@ namespace QuaverBot.Core
             };
 
             // hook message event to log chart id if link was sent
-            _client.MessageCreated += (_, args) =>
+            _client.MessageCreated += async (_, args) =>
             {
-                if (args.Author.IsBot || string.IsNullOrEmpty(args.Message.Content)) return Task.CompletedTask;
+                if (args.Author.IsBot || string.IsNullOrEmpty(args.Message.Content)) return;
                 var content = args.Message.Content;
-                string id;
+                bool isSet;
+                string match;
 
                 if (MapRegex.IsMatch(content))
-                    id = MapRegex.Match(args.Message.Content).Value;
+                {
+                    match = MapRegex.Match(args.Message.Content).Value;
+                    isSet = false;
+                }
                 else if (MapSetRegex.IsMatch(content))
-                    id = MapSetRegex.Match(args.Message.Content).Value;
+                {
+                    match = MapSetRegex.Match(args.Message.Content).Value;
+                    isSet = true;
+                }
                 else
-                    return Task.CompletedTask;
+                    return;
 
+                var id = Convert.ToInt64(match.Substring(match.LastIndexOf('/') + 1));
+                
                 Config.GetGuild(args.Guild.Id)
-                    .UpdateChartInChannel(args.Channel.Id, Convert.ToInt64(id.Substring(id.LastIndexOf('/') + 1)),
-                        false);
+                    .UpdateChartInChannel(args.Channel.Id, id, isSet);
 
-                return Task.CompletedTask;
+                if (Config.GetGuild(args.Guild.Id).AutomaticMapInfo)
+                {
+                    var embed = isSet ? await Util.GetMapSetInfo(id) : await Util.GetMapInfo(id);
+                    await args.Message.RespondAsync(embed);
+                }
             };
 
             _client.Ready += (sender, _) =>
