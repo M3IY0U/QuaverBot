@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -36,13 +37,21 @@ namespace QuaverBot.Commands
             }
         }
 
-        [Command("mappreview"), Aliases("qmp")]
-        public async Task MapPreviewCommand(CommandContext ctx, string id, int begin, int length)
+        [Command("mappreview"), Aliases("mp")]
+        public async Task MapPreviewCommand(CommandContext ctx, string id, double percent, int length = 10000)
         {
             new WebClient().DownloadFile($"https://api.quavergame.com/d/web/map/{id}", $"{id}.qua");
             await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("♨"));
-            MapPreview.RenderMap($"{id}.qua", Convert.ToInt32(id), begin, length);
+            await MapPreview.RenderMap($"{id}.qua", Convert.ToInt32(id), percent, length);
+            await ctx.Message.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode("♨"));
             await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{id}.mp4"));
+            await Task.Delay(1000);
+            try
+            {
+                File.Delete($"{id}.qua");
+                File.Delete($"{id}.mp4");
+            }
+            catch { /* ignored */}
         }
         
         [Command("map"), Aliases("m", "c")]

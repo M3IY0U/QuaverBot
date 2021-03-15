@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using FFMpegCore;
+using FFMpegCore.Enums;
 using FFMpegCore.Extend;
 using FFMpegCore.Pipes;
 using SixLabors.ImageSharp;
@@ -21,22 +23,21 @@ namespace QuaverBot.Graphics
 {
     public class MapPreview
     {
-        private const int Width = 800;
+        private const int Width = 400;
         private const int Height = 600;
         private const int Speed = 30;
 
-        public static void RenderMap(string fileName, int id, int begin, int length)
+        public static async Task RenderMap(string fileName, int id, double begin, int length)
         {
-            var frames = new RawVideoPipeSource(GenerateFrames(fileName, begin, length))
-            {
-                FrameRate = 30
-            };
-            FFMpegArguments.FromPipeInput(frames)
+            var frames = new RawVideoPipeSource(GenerateFrames(fileName, begin, length)) {FrameRate = 30};
+            await FFMpegArguments
+                .FromPipeInput(frames, options => options
+                    .UsingMultithreading(true))
                 .OutputToFile($"{id}.mp4")
-                .ProcessSynchronously();
+                .ProcessAsynchronously();
         }
 
-        private static IEnumerable<IVideoFrame> GenerateFrames(string fileName, int begin, int length)
+        private static IEnumerable<IVideoFrame> GenerateFrames(string fileName, double begin, int length)
         {
             var result = new List<BitmapVideoFrameWrapper>();
             var objects = ParseMapFile(fileName).ToList();
@@ -44,7 +45,7 @@ namespace QuaverBot.Graphics
             try
             {
                 var end = Math.Abs(objects.Last().Y);
-                begin = (int) (end * begin) / 100;
+                begin = end * begin / 100d;
 
                 for (var i = 0; i < end; i += 34)
                 {
@@ -122,15 +123,18 @@ namespace QuaverBot.Graphics
 
         private class Note
         {
+            public long X { get; }
+            public long Y { get; protected set; }
+
             public Note(string y, string lane)
             {
                 Y = -Convert.ToInt32(y);
                 X = lane switch
                 {
-                    "1" => 310,
-                    "2" => 370,
-                    "3" => 430,
-                    "4" => 490,
+                    "1" => 110,
+                    "2" => 170,
+                    "3" => 230,
+                    "4" => 290,
                     _ => throw new Exception("was")
                 };
             }
@@ -140,14 +144,16 @@ namespace QuaverBot.Graphics
 
             public virtual bool IsOnScreen()
                 => Y >= 0 && Y <= Height;
-
-            public long X { get; }
-            public long Y { get; protected set; }
         }
 
         private class Slider : Note
         {
             public long EndTime { get; private set; }
+
+            public Slider(string y, string lane, string endTime) : base(y, lane)
+            {
+                EndTime = -Convert.ToInt32(endTime);
+            }
 
             public override void Update()
             {
@@ -157,11 +163,6 @@ namespace QuaverBot.Graphics
 
             public override bool IsOnScreen()
                 => Y >= 0 || EndTime >= 0;
-            
-            public Slider(string y, string lane, string endTime) : base(y, lane)
-            {
-                EndTime = -Convert.ToInt32(endTime);
-            }
         }
     }
 }
