@@ -48,6 +48,7 @@ namespace QuaverBot.Commands
             await Task.Delay(1000);
             try
             {
+                GC.Collect();
                 File.Delete($"{id}.qua");
                 File.Delete($"{id}.mp4");
             }
@@ -113,7 +114,7 @@ namespace QuaverBot.Commands
 
                 // get bpm
                 var bpms = JsonConvert.DeserializeObject<List<double>>($"{mapset.bpms}");
-                var bpmstring = bpms != null && bpms.Count > 1
+                var bpmstring = bpms is {Count: > 1}
                     ? $"{bpms.Min()}♪ - {bpms.Max()}♪ ({bpms.Average()})♪"
                     : $"{bpms!.First()}♪";
 

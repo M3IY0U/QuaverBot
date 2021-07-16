@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FFMpegCore;
-using FFMpegCore.Enums;
 using FFMpegCore.Extend;
 using FFMpegCore.Pipes;
 using SixLabors.ImageSharp;
@@ -143,7 +142,7 @@ namespace QuaverBot.Graphics
                 => Y += Speed;
 
             public virtual bool IsOnScreen()
-                => Y >= 0 && Y <= Height;
+                => Y is >= 0 and <= Height;
         }
 
         private class Slider : Note
