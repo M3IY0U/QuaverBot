@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -10,6 +12,7 @@ using DSharpPlus.Interactivity.Extensions;
 using Newtonsoft.Json;
 using QuaverBot.Core;
 using QuaverBot.Entities;
+using QuaverBot.Graphics;
 
 namespace QuaverBot.Commands
 {
@@ -19,7 +22,7 @@ namespace QuaverBot.Commands
         public Map(Config config) => _config = config;
 
         [Command("mapsearch"), Aliases("ms", "cs")]
-        public async Task MapGroupCommand(CommandContext ctx, [RemainingText] string search = "")
+        public async Task MapSearch(CommandContext ctx, [RemainingText] string search = "")
         {
             var pages = await SearchForMapset(search, ctx);
             // don't waste resources paginating a message that only has 1 page anyway
@@ -34,6 +37,23 @@ namespace QuaverBot.Commands
             }
         }
 
+        [Command("mappreview"), Aliases("mp")]
+        public async Task MapPreviewCommand(CommandContext ctx, string id, double percent, int length = 10000)
+        {
+            new WebClient().DownloadFile($"https://api.quavergame.com/d/web/map/{id}", $"{id}.qua");
+            await ctx.Message.CreateReactionAsync(DiscordEmoji.FromUnicode("♨"));
+            await MapPreview.RenderMap($"{id}.qua", Convert.ToInt32(id), percent, length);
+            await ctx.Message.DeleteOwnReactionAsync(DiscordEmoji.FromUnicode("♨"));
+            await ctx.RespondAsync(new DiscordMessageBuilder().WithFile($"{id}.mp4"));
+            await Task.Delay(1000);
+            try
+            {
+                File.Delete($"{id}.qua");
+                File.Delete($"{id}.mp4");
+            }
+            catch { /* ignored */}
+        }
+        
         [Command("map"), Aliases("m", "c")]
         public async Task MapInfo(CommandContext ctx, string input = "")
         {
